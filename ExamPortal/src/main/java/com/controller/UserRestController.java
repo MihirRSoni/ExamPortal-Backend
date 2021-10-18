@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bean.ResponseBean;
@@ -54,7 +53,7 @@ public class UserRestController {
 
 		if (userRepo.findByUserEmail(user.getUserEmail()) != null) {
 			res.setData(user);
-			res.setMessage(HttpStatus.MULTI_STATUS.getReasonPhrase());
+			res.setMessage(HttpStatus.MULTI_STATUS.getReasonPhrase()+", user already exist!");
 			res.setStatus(HttpStatus.MULTI_STATUS.value());
 			return res;
 		}
@@ -83,70 +82,32 @@ public class UserRestController {
 			res.setStatus(HttpStatus.CREATED.value());
 		} else {
 			res.setData(null);
-			res.setMessage(HttpStatus.NOT_MODIFIED.getReasonPhrase());
+			res.setMessage(HttpStatus.NOT_MODIFIED.getReasonPhrase()+", user not found");
 			res.setStatus(HttpStatus.NOT_MODIFIED.value());
 		}
 		return res;
 	}
-
-	@PostMapping("/role")
-	public ResponseBean<RoleEntity> createRole(@RequestBody RoleEntity role) {
-		ResponseBean<RoleEntity> res = new ResponseBean<RoleEntity>();
-		if (Boolean.valueOf(roleRepo.existsByRoleName(role.getRoleName()))) {
-			res.setData(null);
-			res.setMessage(HttpStatus.MULTI_STATUS.getReasonPhrase());
-			res.setStatus(HttpStatus.MULTI_STATUS.value());
-			return res;
-		}
-		RoleEntity roleInsert = roleRepo.save(role);
-
-		if (roleInsert != null) {
-			res.setData(roleInsert);
-			res.setMessage(HttpStatus.CREATED.getReasonPhrase());
-			res.setStatus(HttpStatus.CREATED.value());
-		} else {
-			res.setData(null);
-			res.setMessage(HttpStatus.NOT_MODIFIED.getReasonPhrase());
-			res.setStatus(HttpStatus.NOT_MODIFIED.value());
-		}
-
-		return res;
-	}
-
-	@GetMapping("/role")
-	public ResponseBean<List<RoleEntity>> getAllRoles() {
-		ResponseBean<List<RoleEntity>> res = new ResponseBean<List<RoleEntity>>();
-		List<RoleEntity> roles = roleRepo.findAll();
-		if (!roles.isEmpty()) {
-			res.setData(roles);
-			res.setMessage(HttpStatus.FOUND.getReasonPhrase());
+	
+	@DeleteMapping("/user/{id}")
+	public ResponseBean<UserEntity> deleteUser(@PathVariable("id") String userIdString){
+		ResponseBean<UserEntity> res = new ResponseBean<>();
+		long userId = Long.valueOf(userIdString);
+		
+		UserEntity userData = userRepo.getById(userId);
+		if(userData!=null) {
+			userRepo.deleteById(userId);
+			
+			res.setData(userData);
+			res.setMessage(HttpStatus.FOUND.getReasonPhrase()+", user delete!");
 			res.setStatus(HttpStatus.FOUND.value());
-		} else {
+		}else {
 			res.setData(null);
-			res.setMessage(HttpStatus.NO_CONTENT.getReasonPhrase());
-			res.setStatus(HttpStatus.NO_CONTENT.value());
-		}
-		return res; 
-	}
-
-	@DeleteMapping("/role/{roleId}")
-	public ResponseBean<String> deleteRole(@PathVariable("roleId") long role) {
-		ResponseBean<String> res = new ResponseBean<String>();
-		RoleEntity roleData = roleRepo.getById(role);
-		if (role > 0 && roleRepo.existsById(role)) {
-			
-			List<UserEntity> usersWithRole = userRepo.findByRole(roleData);
-			userRepo.deleteAll(usersWithRole);
-			roleRepo.deleteById(role);
-			
-			res.setData("role deleted!");
-			res.setMessage(HttpStatus.OK.getReasonPhrase());
-			res.setStatus(HttpStatus.OK.value());
-		} else {
-			res.setData("Role is not found!");
-			res.setMessage(HttpStatus.NO_CONTENT.getReasonPhrase() + ", role id is invalid! ");
-			res.setStatus(HttpStatus.NO_CONTENT.value());
+			res.setMessage(HttpStatus.NOT_FOUND.getReasonPhrase()+", user not Available!");
+			res.setStatus(HttpStatus.NOT_FOUND.value());
 		}
 		return res;
+		
 	}
+
+	
 }
